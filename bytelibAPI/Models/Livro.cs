@@ -1,0 +1,24 @@
+using System.ComponentModel.DataAnnotations;
+using bytelibAPI.Models;
+
+namespace bytelibAPI.Models
+{
+    public class Livro
+    {
+        public int LivroId { get; set; }
+
+        [Required]
+        public string Titulo { get; set; }
+        [Required]
+        public string Autor { get; set; }
+
+        [Required]
+        public string PDF_Url { get; set; }
+
+        [Required]
+        public int TotalPaginas { get; set; }
+
+        // Relação de muitos pra muitos
+        public ICollection<UserLivro> UsersLivros { get; set; }
+    }
+}
