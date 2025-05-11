@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-
-//TODO: AJUSTAR LOGICA DE LOGIN E CADASTRO COM O BACKEND
+import { API_URL } from '../api/api';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [nomeUsuario, setNomeUsuario] = useState('');
+  const [senha, setSenha] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
-    navigate('/');
+
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nomeUsuario, senhaHash: senha })
+    });
+
+    const result = await response.text();
+
+    if (response.ok) {
+      login(nomeUsuario);
+      navigate('/');
+    } else {
+      alert(result);
+    }
   };
 
   return (
@@ -20,10 +33,18 @@ const Login: React.FC = () => {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '300px' }}>
         <h1>Entrar</h1>
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          type="text"
+          placeholder="Nome de usuário"
+          value={nomeUsuario}
+          onChange={e => setNomeUsuario(e.target.value)}
+          required
+          style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #444', background: '#1e1e1e', color: '#fff' }}
+        />
+        <input
+          type="password"
+          placeholder="Senha"
+          value={senha}
+          onChange={e => setSenha(e.target.value)}
           required
           style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #444', background: '#1e1e1e', color: '#fff' }}
         />
@@ -31,7 +52,7 @@ const Login: React.FC = () => {
           Entrar
         </button>
         <p>
-          Não tem conta? <Link to="/register" style={{ color: '#feca1b' }}>Cadastre-se</Link>
+          Não tem conta? <Link to="/cadastro" style={{ color: '#feca1b' }}>Cadastre-se</Link>
         </p>
       </form>
     </div>

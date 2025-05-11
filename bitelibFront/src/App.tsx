@@ -1,7 +1,7 @@
 import React, { JSX } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Cadastro from './pages/Cadatro';
+import Cadastro from './pages/Cadastro';
 import Catalogo from './pages/Catalogo';
 import PaginaLeitura from './pages/PaginaLeitura';
 import { AuthProvider, useAuth } from './auth/AuthContext';
@@ -26,7 +26,7 @@ const App: React.FC = () => (
           }
         />
         <Route
-          path="/book/:id"
+          path="/livros/:id"
           element={
             <PrivateRoute>
               <PaginaLeitura />
