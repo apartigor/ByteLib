@@ -7,7 +7,7 @@ using bytelibAPI.Models;
 namespace bytelibAPI.Controllers
 {
     [ApiController]
-    [Route("")]
+    [Route("api")]
     public class AutenticacaoController : ControllerBase
     {
         private readonly AppDbContext _appDbContext;
@@ -39,9 +39,6 @@ namespace bytelibAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] User user)
         {
-            if (string.IsNullOrEmpty(user.NomeUsuario))
-                return BadRequest("Usuário não encontrado!");
-
             if (string.IsNullOrEmpty(user.SenhaHash))
                 return BadRequest("Senha incorreta!");
 

@@ -15,7 +15,7 @@ const Catalogo: React.FC = () => {
   const [books, setBooks] = useState<Livro[]>([]);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/livros`)
+    axios.get(`${API_URL}/livros`)
       .then((response: { data: React.SetStateAction<Livro[]>; }) => {
         setBooks(response.data);
       })

@@ -16,7 +16,7 @@ const PaginaLeitura: React.FC = () => {
   const [livro, setLivro] = useState<Livro | null>(null);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/livros/${id}`)
+    axios.get(`${API_URL}/livros/${id}`)
       .then(response => {
         setLivro(response.data);
       })

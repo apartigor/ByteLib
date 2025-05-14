@@ -5,7 +5,7 @@ using bytelibAPI.Data;
 namespace bytelibAPI.Controllers
 {
     [ApiController]
-    [Route("")] 
+    [Route("api")] 
     public class HomeController : ControllerBase
     {
         private readonly AppDbContext _appDbContext;
