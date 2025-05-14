@@ -28,6 +28,14 @@ namespace bytelibAPI.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Capa_URL")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("PDF_Url")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -50,11 +58,9 @@ namespace bytelibAPI.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("SenhaHash")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("NomeUsuario");

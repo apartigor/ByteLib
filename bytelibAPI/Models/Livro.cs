@@ -9,8 +9,15 @@ namespace bytelibAPI.Models
 
         [Required]
         public string Titulo { get; set; }
+
         [Required]
         public string Autor { get; set; }
+
+        [Required]
+        public string Descricao { get; set; }
+
+        [Required]
+        public string Capa_URL { get; set; }
 
         [Required]
         public string PDF_Url { get; set; }
