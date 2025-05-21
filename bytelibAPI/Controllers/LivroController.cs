@@ -26,7 +26,6 @@ namespace bytelibAPI.Controllers
             // valida se o livro ja existe
             var livroExistente = await _appDbContext.Livros
                 .FirstOrDefaultAsync(l => l.Titulo == livro.Titulo && l.Autor == livro.Autor);
-
             if (livroExistente != null)
                 return BadRequest("Livro já cadastrado.");
 
