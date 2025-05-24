@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../api/api';
+import { Viewer, Worker } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 interface Livro {
   livroId: number;
@@ -17,23 +20,71 @@ const PaginaLeitura: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [livro, setLivro] = useState<Livro | null>(null);
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(1.0);
   const [darkMode, setDarkMode] = useState(true);
   const [carregandoArquivo, setCarregandoArquivo] = useState(true);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [highestPage, setHighestPage] = useState(1);
+
+  const progressoPorcentagem = livro
+    ? (highestPage / livro.totalPaginas) * 100
+    : 0;
+
 
   useEffect(() => {
     axios.get(`${API_URL}/livros/${id}`)
-      .then(response => {
-        setLivro(response.data);
+      .then(resp => {
+        setLivro(resp.data);
+
+        const nomeUsuario = localStorage.getItem('nomeUsuario')!;
+        return axios.get<number>(`${API_URL}/progresso/${id}/${nomeUsuario}`);
       })
-      .catch(error => {
-        console.error('Erro ao buscar o livro:', error);
+      .then(resp => {
+        const p = resp.data;
+        setPaginaAtual(p);
+        setHighestPage(p);
+      })
+      .catch(() => {
+        setPaginaAtual(1);
+        setHighestPage(1);
       });
   }, [id]);
 
+  const salvarProgresso = (pagina: number) => {
+    const nomeUsuario = localStorage.getItem('nomeUsuario');
+    if (!nomeUsuario) return; // sem usuário, não salva
+    
+    axios
+    .post(`${API_URL}/progresso/${id}/${nomeUsuario}`, { pagina })
+    .catch(err => console.error('Erro ao salvar progresso:', err));
+  };
+  
+  const handlePageChange = (e: { currentPage: number }) => {
+      const novaPagina = e.currentPage + 1;
+      setPaginaAtual(novaPagina);
+  
+      if (novaPagina > highestPage) {
+        setHighestPage(novaPagina);
+        salvarProgresso(novaPagina);
+      }
+    };
+    
+
+  useEffect(() => {
+      const onUnload = () => salvarProgresso(highestPage);
+
+      window.addEventListener('beforeunload', onUnload);
+      window.addEventListener('popstate', onUnload);
+
+      return () => {
+        window.removeEventListener('beforeunload', onUnload);
+        window.removeEventListener('popstate', onUnload);
+      };
+    }, [highestPage]);
+
   const toggleTema = () => setDarkMode(prev => !prev);
-  const aumentarZoom = () => setZoom(prev => Math.min(prev + 10, 200));
-  const diminuirZoom = () => setZoom(prev => Math.max(prev - 10, 50));
+  const aumentarZoom = () => setZoom(prev => Math.min(prev + 0.2, 2));
+  const diminuirZoom = () => setZoom(prev => Math.max(prev - 0.2, 0.5));
   const onArquivoLoad = () => setCarregandoArquivo(false);
 
   if (!livro) {
@@ -44,7 +95,7 @@ const PaginaLeitura: React.FC = () => {
     );
   }
 
-  const isPDF = livro.pdF_Url.toLowerCase().endsWith('.pdf');
+  const isPDF = livro?.pdF_Url?.toLowerCase().endsWith('.pdf');
   const temaClasses = darkMode ? 'bg-zinc-900 text-white' : 'bg-white text-gray-900';
 
   return (
@@ -78,40 +129,51 @@ const PaginaLeitura: React.FC = () => {
         <p className="mt-1 text-sm">Total de páginas: {livro.totalPaginas}</p>
       </header>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="md:w-1/4 w-full">
-          <img src={livro.capa_URL} alt="Capa" className="rounded shadow-lg" />
-        </div>
+      <div className="fixed bottom-0 left-6 flex flex-col space-y-1 z-50 text-sm text-white-600">
+        <span>Página {paginaAtual} de {livro.totalPaginas}</span>
+        <span>{progressoPorcentagem.toFixed(0)}% lido</span>
+      </div>
+      <div className="fixed top-0 left-0 h-full w-3 bg-white rounded-r-lg overflow-hidden z-50">
+        <div
+          className="bg-blue-600 transition-all duration-300 w-full"
+          style={{ height: `${progressoPorcentagem}%` }}
+        ></div>
+      </div>
 
-        {/* livro */}
-        <div className="flex-1 relative">
-          {carregandoArquivo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-yellow-300 font-semibold z-10">
-              Carregando livro...
-            </div>
-          )}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="md:w-1/6 w-full">
+          <img src={`http://localhost:5276/${livro.capa_URL}`} alt="Capa" className="rounded shadow-lg" />
+        </div>
+        <div className="relative w-1/2">
+
           {isPDF ? (
-            <embed
-              src={livro.pdF_Url}
-              type="application/pdf"
-              width="100%"
-              height="600px"
-              onLoad={onArquivoLoad}
-              style={{ zoom: `${zoom}%` }}
-              className={`rounded shadow-xl ${carregandoArquivo ? 'hidden' : 'block'}`}
-            />
-          ) : (
+            <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+              <div
+                className="rounded shadow-xl"
+                style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+              >
+                <Viewer
+                  fileUrl={`http://localhost:5276/${livro.pdF_Url}`}
+                  onDocumentLoad={onArquivoLoad}
+                  defaultScale={zoom}
+                  initialPage={paginaAtual - 1} 
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            </Worker>
+
+        ) : (
             <img
-              src={livro.pdF_Url}
+              src={`http://localhost:5276${livro.pdF_Url}`}
               onLoad={onArquivoLoad}
               alt="Livro"
-              style={{ width: `${zoom}%`, height: 'auto' }}
-              className={`rounded shadow-xl ${carregandoArquivo ? 'hidden' : 'block'}`}
+              style={{ width: `${zoom * 100}%`, height: 'auto' }}
+              className="rounded shadow-xl"
             />
-          )}
+        )}
 
           <a
-            href={livro.pdF_Url}
+            href={`http://localhost:5276/${livro.pdF_Url}`}
             download
             className="inline-block mt-6 bg-yellow-400 text-black font-semibold px-6 py-3 rounded shadow-md hover:bg-yellow-500 transition-all"
           >

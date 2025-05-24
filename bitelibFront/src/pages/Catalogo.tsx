@@ -57,7 +57,7 @@ const Catalogo: React.FC = () => {
             className="bg-zinc-800 rounded-xl p-4 shadow-md hover:shadow-yellow-500/30 transition-all flex flex-col justify-between"
           >
             <img
-              src={book.capa_URL}
+              src={`http://localhost:5276/${book.capa_URL}`}
               alt={book.titulo}
               className="w-full h-64 object-cover rounded-lg mb-4"
             />
@@ -75,7 +75,7 @@ const Catalogo: React.FC = () => {
               </Link>
 
               <a
-                href={book.pdF_Url}
+                href={`http://localhost:5276/${book.pdF_Url}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-yellow-300 hover:underline"

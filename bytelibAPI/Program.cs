@@ -5,7 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 var connectionString = builder.Configuration.GetConnectionString("AppDbConnectionString");
-builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+);
 
 builder.Services.AddCors(options =>
 {
@@ -19,10 +21,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseCors(); 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthorization();
-app.UseCors();
 app.MapControllers();
 
 // query SQL inicial para adicionar os pdfs
