@@ -83,5 +83,26 @@ namespace bytelibAPI.Controllers
 
             return Ok(userLivro.Progresso);
         }
+
+        [HttpGet("meus-livros/{nomeUsuario}")]
+        public async Task<IActionResult> GetLivrosByUser(string nomeUsuario)
+        {
+            var livrosUsuario = await _appDbContext.UsuariosLivros
+            .Where(ul => ul.NomeUsuario == nomeUsuario)
+            .Include(ul => ul.Livro)
+            .Select(ul => new
+            {
+                ul.LivroId,
+                ul.Livro.Titulo,
+                ul.Livro.Autor,
+                ul.Livro.Descricao,
+                ul.Livro.Capa_URL,
+                ul.Livro.PDF_Url,
+                ul.Livro.TotalPaginas,
+                Progresso = ul.Progresso
+            })
+            .ToListAsync();
+            return Ok(livrosUsuario);
+        }
     }
 }

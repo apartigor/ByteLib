@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace bytelibAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class recreateDB : Migration
+    public partial class RecreateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

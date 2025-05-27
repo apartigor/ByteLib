@@ -10,8 +10,8 @@ using bytelibAPI.Data;
 namespace bytelibAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250524220052_recreateDB")]
-    partial class recreateDB
+    [Migration("20250527234753_RecreateDB")]
+    partial class RecreateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
