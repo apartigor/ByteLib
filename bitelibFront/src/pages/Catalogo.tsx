@@ -13,17 +13,38 @@ interface Livro {
   totalPaginas: number;
 }
 
+interface LivroUsuario extends Livro {
+  progresso: number;
+}
+
 const Catalogo: React.FC = () => {
   const [books, setBooks] = useState<Livro[]>([]);
+  const [userBooks, setUserBooks] = useState<LivroUsuario[]>([]);
   const [search, setSearch] = useState('');
 
+  const user = localStorage.getItem('bytelib_user') || '';
+
+  // Carregar catálogo geral
   useEffect(() => {
     axios.get(`${API_URL}/livros`)
       .then(response => setBooks(response.data))
       .catch(error => console.error('Erro ao buscar livros:', error));
   }, []);
 
+  // Carregar livros do usuário
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API_URL}/meus-livros/${user}`)
+      .then(response => setUserBooks(response.data))
+      .catch(error => console.error('Erro ao buscar livros do usuário:', error));
+  }, [user]);
+
   const filteredBooks = books.filter(book =>
+    book.titulo.toLowerCase().includes(search.toLowerCase()) ||
+    book.autor.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredUserBooks = userBooks.filter(book =>
     book.titulo.toLowerCase().includes(search.toLowerCase()) ||
     book.autor.toLowerCase().includes(search.toLowerCase())
   );
@@ -41,6 +62,7 @@ const Catalogo: React.FC = () => {
       </header>
 
       <h2 className="text-3xl font-bold mb-4">📚 Catálogo de Livros</h2>
+
       <div className="mb-8">
         <input
           type="text"
@@ -50,6 +72,7 @@ const Catalogo: React.FC = () => {
           onChange={e => setSearch(e.target.value)}
         />
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 xl:grid-cols-6 gap-6">
         {filteredBooks.map(book => (
           <div
@@ -88,7 +111,66 @@ const Catalogo: React.FC = () => {
       </div>
 
       {filteredBooks.length === 0 && (
-        <p className="text-gray-400 mt-10 text-center">Nenhum livro encontrado com esse termo.</p>
+        <p className="text-gray-400 mt-10 text-center">
+          Nenhum livro encontrado no catálogo com esse termo.
+        </p>
+      )}
+
+      {/* ========================= */}
+      {/* 🎯 Seção Meus Livros */}
+      {/* ========================= */}
+
+      <h2 className="text-3xl font-bold mb-4 mt-16">📖 Meus Livros</h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 xl:grid-cols-6 gap-6">
+        {filteredUserBooks.map(book => (
+          <div
+            key={book.livroId}
+            className="bg-zinc-800 rounded-xl p-4 shadow-md hover:shadow-yellow-500/30 transition-all flex flex-col justify-between"
+          >
+            <img
+              src={`http://localhost:5276/${book.capa_URL}`}
+              alt={book.titulo}
+              className="w-full h-64 object-cover rounded-lg mb-4"
+            />
+            <h3 className="text-xl font-semibold">{book.titulo}</h3>
+            <p className="text-yellow-400 font-medium mb-1">Autor: {book.autor}</p>
+            <p className="text-sm text-gray-300 mb-2 line-clamp-3">{book.descricao}</p>
+            <p className="text-sm text-gray-400">Páginas: {book.totalPaginas}</p>
+
+            <div className="w-full bg-zinc-700 rounded-full h-3 mt-2 mb-4">
+              <div
+                className="bg-yellow-400 h-3 rounded-full"
+                style={{ width: `${book.progresso}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">Progresso: {book.progresso}%</p>
+
+            <div className="mt-2 flex justify-between items-center">
+              <Link
+                to={`/livros/${book.livroId}`}
+                className="bg-yellow-400 text-black px-4 py-2 rounded font-semibold hover:bg-yellow-500 transition"
+              >
+                📖 Ler
+              </Link>
+
+              <a
+                href={`http://localhost:5276/${book.pdF_Url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-yellow-300 hover:underline"
+              >
+                Baixar
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredUserBooks.length === 0 && (
+        <p className="text-gray-400 mt-10 text-center">
+          Você ainda não possui livros na sua biblioteca.
+        </p>
       )}
     </div>
   );
