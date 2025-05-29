@@ -5,6 +5,7 @@ import { API_URL } from '../api/api';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+import { useAuth } from '../auth/AuthContext';
 
 interface Livro {
   livroId: number;
@@ -19,6 +20,7 @@ interface Livro {
 const PaginaLeitura: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: nomeUsuarioLogado } = useAuth();
   const [livro, setLivro] = useState<Livro | null>(null);
   const [zoom, setZoom] = useState(1.0);
   const [darkMode, setDarkMode] = useState(true);
@@ -26,61 +28,73 @@ const PaginaLeitura: React.FC = () => {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [highestPage, setHighestPage] = useState(1);
 
-  const progressoPorcentagem = livro
-    ? (highestPage / livro.totalPaginas) * 100
-    : 0;
+
+  const progressoPorcentagem = (livro && livro.totalPaginas > 0)
+                              ? (highestPage / livro.totalPaginas) * 100
+                              : 0;
 
 
   useEffect(() => {
     axios.get(`${API_URL}/livros/${id}`)
       .then(resp => {
         setLivro(resp.data);
-
-        const nomeUsuario = localStorage.getItem('nomeUsuario')!;
-        return axios.get<number>(`${API_URL}/progresso/${id}/${nomeUsuario}`);
+        if (nomeUsuarioLogado && nomeUsuarioLogado !== 'null' && nomeUsuarioLogado.trim() !== '') {
+          return axios.get<number>(`${API_URL}/progresso/${id}/${nomeUsuarioLogado}`);
+        } else {
+          return Promise.reject("Nome de usuário não encontrado.");
+        }
       })
-      .then(resp => {
-        const p = resp.data;
-        setPaginaAtual(p);
-        setHighestPage(p);
+      .then(respProgresso => {
+        if (respProgresso && typeof respProgresso.data === 'number') {
+          const p = respProgresso.data;
+          setPaginaAtual(p);
+          setHighestPage(p);
+        } else if (!nomeUsuarioLogado || nomeUsuarioLogado === 'null' || nomeUsuarioLogado.trim() === '') {
+          setPaginaAtual(1);
+          setHighestPage(1);
+        }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Erro ao buscar dados ou progresso:", err);
         setPaginaAtual(1);
         setHighestPage(1);
       });
-  }, [id]);
+  }, [id, nomeUsuarioLogado]);
 
   const salvarProgresso = (pagina: number) => {
-    const nomeUsuario = localStorage.getItem('nomeUsuario');
-    if (!nomeUsuario) return; // sem usuário, não salva
-    
+    if (!nomeUsuarioLogado) return; // sem usuário, não salva
+
     axios
-    .post(`${API_URL}/progresso/${id}/${nomeUsuario}`, { pagina })
-    .catch(err => console.error('Erro ao salvar progresso:', err));
+      .post(`${API_URL}/progresso/${id}/${nomeUsuarioLogado}`, { pagina })
+      .catch(err => console.error('Erro ao salvar progresso:', err));
   };
-  
+
   const handlePageChange = (e: { currentPage: number }) => {
-      const novaPagina = e.currentPage + 1;
-      setPaginaAtual(novaPagina);
-  
-      if (novaPagina > highestPage) {
-        setHighestPage(novaPagina);
-        salvarProgresso(novaPagina);
-      }
-    };
-    
+    const novaPagina = e.currentPage + 1;
+    setPaginaAtual(novaPagina);
+
+    if (novaPagina > highestPage) {
+      setHighestPage(novaPagina);
+      salvarProgresso(novaPagina);
+    }
+  };
+
 
   useEffect(() => {
-      const onUnload = () => salvarProgresso(highestPage);
+    const onUnload = () => {
+      if (nomeUsuarioLogado && nomeUsuarioLogado.trim() !== '') {
+        salvarProgresso(highestPage);
+      }
+    };
 
-      window.addEventListener('beforeunload', onUnload);
-      window.addEventListener('popstate', onUnload);
+    window.addEventListener('beforeunload', onUnload);
+    window.addEventListener('popstate', onUnload);
 
-      return () => {
-        window.removeEventListener('beforeunload', onUnload);
-        window.removeEventListener('popstate', onUnload);
-      };
-    }, [highestPage]);
+    return () => {
+      window.removeEventListener('beforeunload', onUnload);
+      window.removeEventListener('popstate', onUnload);
+    };
+  }, [highestPage, nomeUsuarioLogado]);
 
   const toggleTema = () => setDarkMode(prev => !prev);
   const aumentarZoom = () => setZoom(prev => Math.min(prev + 0.2, 2));
@@ -156,13 +170,13 @@ const PaginaLeitura: React.FC = () => {
                   fileUrl={`http://localhost:5276/${livro.pdF_Url}`}
                   onDocumentLoad={onArquivoLoad}
                   defaultScale={zoom}
-                  initialPage={paginaAtual - 1} 
+                  initialPage={paginaAtual - 1}
                   onPageChange={handlePageChange}
                 />
               </div>
             </Worker>
 
-        ) : (
+          ) : (
             <img
               src={`http://localhost:5276${livro.pdF_Url}`}
               onLoad={onArquivoLoad}
@@ -170,7 +184,7 @@ const PaginaLeitura: React.FC = () => {
               style={{ width: `${zoom * 100}%`, height: 'auto' }}
               className="rounded shadow-xl"
             />
-        )}
+          )}
 
           <a
             href={`http://localhost:5276/${livro.pdF_Url}`}

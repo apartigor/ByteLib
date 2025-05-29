@@ -17,8 +17,14 @@ namespace bytelibAPI.Controllers
             _appDbContext = appDbContext;
         }
 
+        // DTO Simples para salvar o progresso
+        public class ProgressoUpdateRequest
+        {
+            public double Pagina { get; set; }
+        }
+
         [HttpPost("progresso/{livroId}/{nomeUsuario}")]
-        public async Task<IActionResult> SalvarProgresso(int livroId, string nomeUsuario, [FromBody] double paginaAtual)
+        public async Task<IActionResult> SalvarProgresso(int livroId, string nomeUsuario, [FromBody] ProgressoUpdateRequest request)
         {
             if (string.IsNullOrEmpty(nomeUsuario))
                 return BadRequest("Nome do usuário é obrigatório.");
@@ -32,6 +38,8 @@ namespace bytelibAPI.Controllers
             var usuarioEncontrado = await _appDbContext.Users.FindAsync(nomeUsuario);
             if (usuarioEncontrado == null)
                 return BadRequest("Usuário não encontrado.");
+
+            double paginaAtual = request.Pagina;
 
             if (paginaAtual > livroExistente.TotalPaginas || paginaAtual < 0)
                 return BadRequest("Dados colocados incorretamente!");
