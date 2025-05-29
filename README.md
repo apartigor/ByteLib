@@ -46,17 +46,20 @@ cd bytelibAPI
 # 3. Restaure os pacotes
 dotnet restore
 
-# 4. Execute o back
+# 4. Inicialize o banco de dados
+dotnet ef migrations add recreateDB
+dotnet ef database update
+
+# 5. Execute o back
 dotnet run
 
-# 5. Acesse o front do projeto
+# 6. Acesse o front do projeto
 cd bitelibFront
 
-# 6. Instale as depêndencias
+# 7. Instale as depêndencias
 npm install
 
-# 7. Execute o front
+# 8. Execute o front
 npm run dev
 
-# 8. Abra o localhost em seu navegador
-locahost:3000
+# 9. Abra o localhost em seu navegador
